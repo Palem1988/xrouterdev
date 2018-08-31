@@ -30,7 +30,7 @@ class BalancePlugin:
         
     def scan_all(self, start=0, end=-1):
         stop = 0
-        for block in self.blockchain.get_unordered_blocks():
+        for block in self.blockchain.get_ordered_blocks(os.path.expanduser('~/bitcoin-data/blocks/index')):
             stop = stop + 1
             if (end > 0) and (stop > end):
                 break
@@ -59,7 +59,7 @@ class BalancePlugin:
             
 
 p = BalancePlugin()
-p.scan_all(0, 50000)
+#p.scan_all(0, 50000)
 print(len(list(p.balances.keys())))
 for k in p.balances:
     if p.balances[k] > 1000000000:
