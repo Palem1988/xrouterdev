@@ -54,6 +54,15 @@ class Address(object):
 
             self._address = base58.encode(version + self.hash + checksum[:4])
         return self._address
+        
+    def get_address(self, version_bytes=[b'\x00', b'\x05']):
+        """Returns the base58 encoded representation of this address"""
+        if self._address is None:
+            version = version_bytes[0] if self.type == "normal" else version_bytes[1]
+            checksum = double_sha256(version + self.hash)
+
+            self._address = base58.encode(version + self.hash + checksum[:4])
+        return self._address
 
     def is_p2sh(self):
         return self.type == "p2sh"

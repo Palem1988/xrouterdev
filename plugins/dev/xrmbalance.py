@@ -9,6 +9,8 @@ from blockchain_parser.blockchain import Blockchain
 from blockchain_parser.script import *
 
 BLOCKNET_PCH = b"\xa1\xa0\xa2\xa3"
+BLOCKNET_TEST_PCH = b"\x45\x76\x65\xba"
+BLOCKNET_TEST_VB = [b'\x8b', b'\x13']
 
 class BalancePlugin:
     def __init__(self):
@@ -23,7 +25,7 @@ class BalancePlugin:
         except:
             self.balances = {}
         #self.blockchain = Blockchain(os.path.expanduser('~/bitcoin-data/blocks'))
-        self.blockchain = Blockchain(os.path.expanduser('~/.blocknetdx/blocks'), BLOCKNET_PCH)
+        self.blockchain = Blockchain(os.path.expanduser('~/.blocknetdx/testnet4/blocks'), BLOCKNET_TEST_PCH)
             
     def dump(self):
         f = open("txindex.pickle", "wb")
@@ -39,18 +41,20 @@ class BalancePlugin:
             if (end > 0) and (stop > end):
                 break
             #print block
-            print (stop)
+            if stop % 1000 == 0:
+                print (stop)
             for transaction in block.transactions:
                 self.txindex[transaction.hash] = {}
                 output_i = 0
                 for output in transaction.outputs:
                     self.txindex[transaction.hash][output_i] = [output.value, []]
                     for address in output.addresses:
-                        self.txindex[transaction.hash][output_i][1].append(address.address)
-                        if not address.address in self.balances:
-                            self.balances[address.address] = output.value
+                        addr = address.get_address(version_bytes=BLOCKNET_TEST_VB)
+                        self.txindex[transaction.hash][output_i][1].append(addr)
+                        if not addr in self.balances:
+                            self.balances[addr] = output.value
                         else:
-                            self.balances[address.address] += output.value
+                            self.balances[addr] += output.value
                     output_i += 1
                 for inp in transaction.inputs:
                     try:
@@ -63,8 +67,10 @@ class BalancePlugin:
             
 
 p = BalancePlugin()
-p.scan_all(0, 50000)
+#p.scan_all()
 print(len(list(p.balances.keys())))
-for k in p.balances:
+print(p.txindex['023932239b35a1e9a252eda1b3ac2b58dc02ba9df4baa2363bdc443b612c6512'])
+print(p.balances['xyLmRZxgDhnHq9xbCtV6HQQLNCDMxzJKbz'] / 100000000.0)
+'''for k in p.balances:
     if p.balances[k] > 1000000000000:
-        print (k, p.balances[k] / 100000000.0)
+        print (k, p.balances[k] / 100000000.0)'''
