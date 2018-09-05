@@ -21,11 +21,6 @@ chain_const = {"BTC":{"pch": b"\xf9\xbe\xb4\xd9", "vb":[b'\x00', b'\x05']},
 class BalancePlugin:
     def __init__(self, chain, chainpath):
         try:
-            f = open("txindex.pickle", "rb")
-            self.txindex = pickle.load(f)
-        except:
-            self.txindex = {}
-        try:
             f = open("balances.pickle", "rb")
             self.balances = pickle.load(f)
         except:
@@ -41,6 +36,11 @@ class BalancePlugin:
         pickle.dump(self.balances, f)
         
     def scan_all(self, start=0, end=-1):
+        try:
+            f = open("txindex.pickle", "rb")
+            self.txindex = pickle.load(f)
+        except:
+            self.txindex = {}
         stop = 0
         #for block in self.blockchain.get_ordered_blocks(os.path.expanduser('~/bitcoin-data/blocks/index')):
         for block in self.blockchain.get_unordered_blocks():
@@ -71,6 +71,11 @@ class BalancePlugin:
                     except:
                         pass
         self.dump()
+        del self.txindex
+        self.txindex = {}
+        
+    def get_balance(address):
+        return p.balances[address] / 100000000.0
             
 if __name__ == "__main__":
     f = open("xrmbalance.conf", "r")
@@ -81,7 +86,6 @@ if __name__ == "__main__":
     p = plugins["BLOCKTEST"]
     #p.scan_all()
     print(len(list(p.balances.keys())))
-    print(p.txindex['023932239b35a1e9a252eda1b3ac2b58dc02ba9df4baa2363bdc443b612c6512'])
     print(p.balances['xyLmRZxgDhnHq9xbCtV6HQQLNCDMxzJKbz'] / 100000000.0)
     '''for k in p.balances:
         if p.balances[k] > 1000000000000:
