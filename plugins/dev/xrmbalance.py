@@ -21,7 +21,7 @@ chain_const = {"BTC":{"pch": b"\xf9\xbe\xb4\xd9", "vb":[b'\x00', b'\x05']},
 class BalancePlugin:
     def __init__(self, chain, chainpath):
         try:
-            f = open("balances.pickle", "rb")
+            f = open(self.chain + "-balances.pickle", "rb")
             self.balances = pickle.load(f)
         except:
             self.balances = {}
@@ -30,14 +30,14 @@ class BalancePlugin:
         self.blockchain = Blockchain(os.path.expanduser(self.chainpath), chain_const[self.chain]["pch"])
             
     def dump(self):
-        f = open("txindex.pickle", "wb")
+        f = open(self.chain + "-txindex.pickle", "wb")
         pickle.dump(self.txindex, f)
-        f = open("balances.pickle", "wb")
+        f = open(self.chain + "-balances.pickle", "wb")
         pickle.dump(self.balances, f)
         
     def scan_all(self, start=0, end=-1):
         try:
-            f = open("txindex.pickle", "rb")
+            f = open(self.chain + "-txindex.pickle", "rb")
             self.txindex = pickle.load(f)
         except:
             self.txindex = {}
@@ -78,7 +78,7 @@ class BalancePlugin:
         return p.balances[address] / 100000000.0
             
 if __name__ == "__main__":
-    f = open("xrmbalance.conf", "r")
+    f = open("xrmbalance.ini", "r")
     config = json.loads(f.read())
     plugins = {}
     for coin in config.keys():
