@@ -9,10 +9,6 @@ import json
 from blockchain_parser.blockchain import Blockchain
 from blockchain_parser.script import *
 
-BLOCKNET_PCH = b"\xa1\xa0\xa2\xa3"
-BLOCKNET_TEST_PCH = b"\x45\x76\x65\xba"
-BLOCKNET_TEST_VB = [b'\x8b', b'\x13']
-
 chain_const = {"BTC":{"pch": b"\xf9\xbe\xb4\xd9", "vb":[b'\x00', b'\x05']},
          "BLOCK":{"pch": b"\xa1\xa0\xa2\xa3", "vb":[b'\x1a', b'\x1c']},
          "BLOCKTEST":{"pch": b"\x45\x76\x65\xba", "vb":[b'\x8b', b'\x13']}
@@ -56,7 +52,7 @@ class BalancePlugin:
                 for output in transaction.outputs:
                     self.txindex[transaction.hash][output_i] = [output.value, []]
                     for address in output.addresses:
-                        addr = address.get_address(version_bytes=BLOCKNET_TEST_VB)
+                        addr = address.get_address(version_bytes=chain_const[self.chain]["vb"])
                         self.txindex[transaction.hash][output_i][1].append(addr)
                         if not addr in self.balances:
                             self.balances[addr] = output.value
