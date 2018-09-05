@@ -16,13 +16,13 @@ chain_const = {"BTC":{"pch": b"\xf9\xbe\xb4\xd9", "vb":[b'\x00', b'\x05']},
 
 class BalancePlugin:
     def __init__(self, chain, chainpath):
+        self.chain = chain
+        self.chainpath = chainpath
         try:
             f = open(self.chain + "-balances.pickle", "rb")
             self.balances = pickle.load(f)
         except:
             self.balances = {}
-        self.chain = chain
-        self.chainpath = chainpath
         self.blockchain = Blockchain(os.path.expanduser(self.chainpath), chain_const[self.chain]["pch"])
             
     def dump(self):
@@ -31,17 +31,21 @@ class BalancePlugin:
         f = open(self.chain + "-balances.pickle", "wb")
         pickle.dump(self.balances, f)
         
-    def scan_all(self, start=0, end=-1):
-        try:
-            f = open(self.chain + "-txindex.pickle", "rb")
-            self.txindex = pickle.load(f)
-        except:
-            self.txindex = {}
+    def scan_all(self, start=0, end=None):
         stop = 0
-        #for block in self.blockchain.get_ordered_blocks(os.path.expanduser('~/bitcoin-data/blocks/index')):
-        for block in self.blockchain.get_unordered_blocks():
+        self.txindex = {}
+        if (start == 0) and (end is None):
+            block_generator = self.blockchain.get_unordered_blocks()
+        else:
+            try:
+                f = open(self.chain + "-txindex.pickle", "rb")
+                self.txindex = pickle.load(f)
+            except:
+                self.txindex = {}
+            block_generator = self.blockchain.get_ordered_blocks(os.path.expanduser(self.chainpath + "/index"), start=start, end=end)
+        for block in block_generator:
             stop = stop + 1
-            if (end > 0) and (stop > end):
+            if not (end is None) and (stop > end):
                 break
             #print block
             if stop % 1000 == 0:
@@ -70,8 +74,11 @@ class BalancePlugin:
         del self.txindex
         self.txindex = {}
         
-    def get_balance(address):
-        return p.balances[address] / 100000000.0
+    def get_balance(self, address):
+        if address in self.balances:
+            return self.balances[address] / 100000000.0
+        else:
+            return "Unknown address"
             
 if __name__ == "__main__":
     f = open("xrmbalance.ini", "r")
@@ -79,10 +86,27 @@ if __name__ == "__main__":
     plugins = {}
     for coin in config.keys():
         plugins[coin] = BalancePlugin(coin, config[coin])
-    p = plugins["BLOCKTEST"]
-    #p.scan_all()
-    print(len(list(p.balances.keys())))
-    print(p.balances['xyLmRZxgDhnHq9xbCtV6HQQLNCDMxzJKbz'] / 100000000.0)
+        
+    if len(sys.argv) < 3:
+        print("Not enough parameters")
+        sys.exit(0)
+    chain = sys.argv[1]
+    if not chain in plugins:
+        print("This chain is not available yet")
+        sys.exit(0)
+    command = sys.argv[2]
+    p = plugins[chain]
+    if command == "scan":
+        p.scan_all()
+    elif command == "getbalance":
+        if len(sys.argv) < 4:
+            print("Address not specified")
+            sys.exit(0)
+        else:
+            addr = sys.argv[3]
+            print(p.get_balance(addr))
+    #print(len(list(p.balances.keys())))
+    #print(p.balances['xyLmRZxgDhnHq9xbCtV6HQQLNCDMxzJKbz'] / 100000000.0)
     '''for k in p.balances:
         if p.balances[k] > 1000000000000:
             print (k, p.balances[k] / 100000000.0)'''
