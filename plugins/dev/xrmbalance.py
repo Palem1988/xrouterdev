@@ -12,6 +12,11 @@ BLOCKNET_PCH = b"\xa1\xa0\xa2\xa3"
 BLOCKNET_TEST_PCH = b"\x45\x76\x65\xba"
 BLOCKNET_TEST_VB = [b'\x8b', b'\x13']
 
+coins = {"BTC":{"pch": b"\xf9\xbe\xb4\xd9", "vb":[b'\x00', b'\x05']},
+         "BLOCK":{"pch": b"\xa1\xa0\xa2\xa3", "vb":[b'\x1a', b'\x1c']},
+         "BLOCKTEST":{"pch": b"\x45\x76\x65\xba", "vb":[b'\x8b', b'\x13']}
+         }
+
 class BalancePlugin:
     def __init__(self):
         try:
