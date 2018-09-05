@@ -34,9 +34,9 @@ class BalancePlugin:
     def scan_all(self, start=0, end=None):
         stop = 0
         self.txindex = {}
-        self.balances = {}
         if (start == 0) and (end is None):
             block_generator = self.blockchain.get_unordered_blocks()
+            self.balances = {}
         else:
             try:
                 f = open(self.chain + "-txindex.pickle", "rb")
@@ -44,6 +44,7 @@ class BalancePlugin:
             except:
                 self.txindex = {}
             block_generator = self.blockchain.get_ordered_blocks(os.path.expanduser(self.chainpath + "/index"), start=start, end=end)
+        unresolved = []
         for block in block_generator:
             stop = stop + 1
             if not (end is None) and (stop > end):
@@ -73,7 +74,17 @@ class BalancePlugin:
                             else:
                                 self.balances[address] -= tx[0]
                     except:
-                        pass
+                        unresolved.append([inp.transaction_hash, inp.transaction_index])
+        for txd in unresolved:
+            try:
+                tx = self.txindex[txd[0]][txd[1]]
+                for address in tx[1]:
+                    if not address in self.balances:
+                        self.balances[address] = -tx[0]
+                    else:
+                        self.balances[address] -= tx[0]
+            except:
+                pass
         self.dump()
         del self.txindex
         self.txindex = {}
