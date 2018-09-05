@@ -5,6 +5,7 @@ import sys
 import collections
 import json
 import pickle
+import json
 from blockchain_parser.blockchain import Blockchain
 from blockchain_parser.script import *
 
@@ -12,13 +13,13 @@ BLOCKNET_PCH = b"\xa1\xa0\xa2\xa3"
 BLOCKNET_TEST_PCH = b"\x45\x76\x65\xba"
 BLOCKNET_TEST_VB = [b'\x8b', b'\x13']
 
-coins = {"BTC":{"pch": b"\xf9\xbe\xb4\xd9", "vb":[b'\x00', b'\x05']},
+chain_const = {"BTC":{"pch": b"\xf9\xbe\xb4\xd9", "vb":[b'\x00', b'\x05']},
          "BLOCK":{"pch": b"\xa1\xa0\xa2\xa3", "vb":[b'\x1a', b'\x1c']},
          "BLOCKTEST":{"pch": b"\x45\x76\x65\xba", "vb":[b'\x8b', b'\x13']}
          }
 
 class BalancePlugin:
-    def __init__(self):
+    def __init__(self, chain, chainpath):
         try:
             f = open("txindex.pickle", "rb")
             self.txindex = pickle.load(f)
@@ -29,8 +30,9 @@ class BalancePlugin:
             self.balances = pickle.load(f)
         except:
             self.balances = {}
-        #self.blockchain = Blockchain(os.path.expanduser('~/bitcoin-data/blocks'))
-        self.blockchain = Blockchain(os.path.expanduser('~/.blocknetdx/testnet4/blocks'), BLOCKNET_TEST_PCH)
+        self.chain = chain
+        self.chainpath = chainpath
+        self.blockchain = Blockchain(os.path.expanduser(self.chainpath), chain_const[self.chain]["pch"])
             
     def dump(self):
         f = open("txindex.pickle", "wb")
@@ -70,12 +72,17 @@ class BalancePlugin:
                         pass
         self.dump()
             
-
-p = BalancePlugin()
-#p.scan_all()
-print(len(list(p.balances.keys())))
-print(p.txindex['023932239b35a1e9a252eda1b3ac2b58dc02ba9df4baa2363bdc443b612c6512'])
-print(p.balances['xyLmRZxgDhnHq9xbCtV6HQQLNCDMxzJKbz'] / 100000000.0)
-'''for k in p.balances:
-    if p.balances[k] > 1000000000000:
-        print (k, p.balances[k] / 100000000.0)'''
+if __name__ == "__main__":
+    f = open("xrmbalance.conf", "r")
+    config = json.loads(f.read())
+    plugins = {}
+    for coin in config.keys():
+        plugins[coin] = BalancePlugin(coin, config[coin])
+    p = plugins["BLOCKTEST"]
+    #p.scan_all()
+    print(len(list(p.balances.keys())))
+    print(p.txindex['023932239b35a1e9a252eda1b3ac2b58dc02ba9df4baa2363bdc443b612c6512'])
+    print(p.balances['xyLmRZxgDhnHq9xbCtV6HQQLNCDMxzJKbz'] / 100000000.0)
+    '''for k in p.balances:
+        if p.balances[k] > 1000000000000:
+            print (k, p.balances[k] / 100000000.0)'''
