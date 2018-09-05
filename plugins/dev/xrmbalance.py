@@ -34,6 +34,7 @@ class BalancePlugin:
     def scan_all(self, start=0, end=None):
         stop = 0
         self.txindex = {}
+        self.balances = {}
         if (start == 0) and (end is None):
             block_generator = self.blockchain.get_unordered_blocks()
         else:
@@ -67,7 +68,10 @@ class BalancePlugin:
                     try:
                         tx = self.txindex[inp.transaction_hash][inp.transaction_index]
                         for address in tx[1]:
-                            self.balances[address] -= tx[0]
+                            if not address in self.balances:
+                                self.balances[address] = -tx[0]
+                            else:
+                                self.balances[address] -= tx[0]
                     except:
                         pass
         self.dump()
