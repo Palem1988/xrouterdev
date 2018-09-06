@@ -14,6 +14,20 @@ chain_const = {"BTC":{"pch": b"\xf9\xbe\xb4\xd9", "vb":[b'\x00', b'\x05']},
          "BLOCKTEST":{"pch": b"\x45\x76\x65\xba", "vb":[b'\x8b', b'\x13']}
          }
 
+PREFIX_SIZE = 1
+
+def gen_prefix(size):
+    letters = "0123456789abcdef"
+    if size == 1:
+        return [c for c in letters]
+    else:
+        res = []
+        suffixes = gen_prefix(size - 1)
+        for c in letters:
+            for s in suffixes:
+                res.append(c + s)
+        return res
+
 class BalancePlugin:
     def __init__(self, chain, chainpath):
         self.chain = chain
@@ -31,6 +45,22 @@ class BalancePlugin:
         f = open(self.chain + "-balances.pickle", "wb")
         pickle.dump(self.balances, f)
         
+    def dump_txindex(self):
+        prefixes = gen_prefix(PREFIX_SIZE)
+        for p in prefixes:
+            p_keys = [txid for txid in self.txindex.keys() if txid.startswith(p)]
+            try:
+                f = open(self.chain + "-" + p + "-txindex.pickle", "rb")
+                txindex_p = pickle.load(f)
+                f.close()
+            except:
+                txindex_p = {}
+            for k in p_keys:
+                txindex_p[k] = self.txindex[k]
+            f = open(self.chain + "-" + p + "-txindex.pickle", "wb")
+            pickle.dump(txindex_p, f)
+            f.close()
+        
     def scan_all(self, start=0, end=None):
         stop = 0
         self.txindex = {}
@@ -45,6 +75,7 @@ class BalancePlugin:
                 self.txindex = {}
             block_generator = self.blockchain.get_ordered_blocks(os.path.expanduser(self.chainpath + "/index"), start=start, end=end)
         unresolved = []
+        txcount = 0
         for block in block_generator:
             stop = stop + 1
             if not (end is None) and (stop > end):
@@ -57,6 +88,7 @@ class BalancePlugin:
                 output_i = 0
                 for output in transaction.outputs:
                     self.txindex[transaction.hash][output_i] = [output.value, []]
+                    txcount += 1
                     for address in output.addresses:
                         addr = address.get_address(version_bytes=chain_const[self.chain]["vb"])
                         self.txindex[transaction.hash][output_i][1].append(addr)
@@ -66,6 +98,8 @@ class BalancePlugin:
                             self.balances[addr] += output.value
                     output_i += 1
                 for inp in transaction.inputs:
+                    if inp.transaction_hash.replace("0", "") == "":
+                        continue
                     try:
                         tx = self.txindex[inp.transaction_hash][inp.transaction_index]
                         for address in tx[1]:
@@ -75,16 +109,27 @@ class BalancePlugin:
                                 self.balances[address] -= tx[0]
                     except:
                         unresolved.append([inp.transaction_hash, inp.transaction_index])
-        for txd in unresolved:
-            try:
-                tx = self.txindex[txd[0]][txd[1]]
-                for address in tx[1]:
-                    if not address in self.balances:
-                        self.balances[address] = -tx[0]
-                    else:
-                        self.balances[address] -= tx[0]
-            except:
-                pass
+            if txcount > 100000:
+                self.dump_txindex()
+                self.txindex = {}
+                txcount = 0
+        self.dump_txindex()
+        prefixes = gen_prefix(PREFIX_SIZE)
+        for p in prefixes:
+            p_unresolved = [txd for txd in unresolved if txd[0].startswith(p)]
+            f = open(self.chain + "-" + p + "-txindex.pickle", "rb")
+            self.txindex = pickle.load(f)
+            f.close()
+            for txd in p_unresolved:
+                try:
+                    tx = self.txindex[txd[0]][txd[1]]
+                    for address in tx[1]:
+                        if not address in self.balances:
+                            self.balances[address] = -tx[0]
+                        else:
+                            self.balances[address] -= tx[0]
+                except:
+                    pass
         self.dump()
         del self.txindex
         self.txindex = {}
