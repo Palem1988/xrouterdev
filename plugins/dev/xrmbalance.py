@@ -107,8 +107,12 @@ def ping():
 @methods.add
 def getbalance(*args, **kwargs):
     #TODO validation
-    rpcchain = kwargs['chain']
-    rpcaddr = kwargs['address']
+    print ("args", kwargs)
+    print ("args2", args)
+    #rpcchain = kwargs['chain']
+    #rpcaddr = kwargs['address']
+    rpcchain = args[0]
+    rpcaddr = args[1]
     p = plugins[rpcchain]
     rpcbalance = p.get_balance(rpcaddr) 
     return "getbalance", rpcbalance
@@ -116,6 +120,10 @@ def getbalance(*args, **kwargs):
 @app.route('/', methods=['POST'])
 def index():
     req = request.get_data().decode()
+    req = json.loads(req)
+    req["jsonrpc"] = "2.0"
+    req = json.dumps(req)
+    print (req)
     response = methods.dispatch(req)
     return Response(str(response), response.http_status,
                     mimetype='application/json')
