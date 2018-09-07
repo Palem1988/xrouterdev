@@ -132,30 +132,15 @@ if __name__ == "__main__":
         plugins[coin] = BalancePlugin(coin, config[coin])
 
     print (config.keys())
-    app.run(host="0.0.0.0", port=int("5000"), debug=True)        
-"""
-    if len(sys.argv) < 3:
-        print("Not enough parameters")
-        sys.exit(0)
-    #print (args)
-    chain = sys.argv[1]
-    if not chain in plugins:
-        print("This chain is not available yet")
-        sys.exit(0)
-    command = sys.argv[2]
-    p = plugins[chain]
-    if command == "scan":
-        p.scan_all()
-    elif command == "getbalance":
-        if len(sys.argv) < 4:
-            print("Address not specified")
-            sys.exit(0)
-        else:
-            addr = sys.argv[3]
-            print(p.get_balance(addr))
-    #print(len(list(p.balances.keys())))
-    #print(p.balances['xyLmRZxgDhnHq9xbCtV6HQQLNCDMxzJKbz'] / 100000000.0)
-    '''for k in p.balances:
-        if p.balances[k] > 1000000000000:
-            print (k, p.balances[k] / 100000000.0)'''
-"""
+    print ( len(sys.argv) )
+    if len(sys.argv) < 2:
+        app.run(host="0.0.0.0", port=int("5000"), debug=True)
+    elif len(sys.argv) < 4:
+        command = sys.argv[1]
+        chain = sys.argv[2]
+        #TODO if adding more commands refactor
+        if command == "scan":
+            print ('Scanning Blockchain: %s' % chain)
+            p = plugins[chain]
+            p.scan_all()
+
