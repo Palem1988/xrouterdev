@@ -6,6 +6,8 @@ import collections
 import json
 import pickle
 import json
+from flask import Flask, request, Response
+from jsonrpcserver import methods
 from blockchain_parser.blockchain import Blockchain
 from blockchain_parser.script import *
 
@@ -13,6 +15,7 @@ chain_const = {"BTC":{"pch": b"\xf9\xbe\xb4\xd9", "vb":[b'\x00', b'\x05']},
          "BLOCK":{"pch": b"\xa1\xa0\xa2\xa3", "vb":[b'\x1a', b'\x1c']},
          "BLOCKTEST":{"pch": b"\x45\x76\x65\xba", "vb":[b'\x8b', b'\x13']}
          }
+
 
 class BalancePlugin:
     def __init__(self, chain, chainpath):
@@ -94,14 +97,40 @@ class BalancePlugin:
             return self.balances[address] / 100000000.0
         else:
             return "Unknown address"
-            
+
+app = Flask(__name__)
+
+@methods.add
+def ping():
+    return 'pong'
+
+@methods.add
+def getbalance(*args, **kwargs):
+    print (args)
+    print (kwargs)
+    return "getbalance", args, kwargs
+
+@app.route('/', methods=['POST'])
+def index():
+    req = request.get_data().decode()
+    response = methods.dispatch(req)
+    return Response(str(response), response.http_status,
+                    mimetype='application/json')
+
+#@app.route("/api/v1/status")
+#def v1status():
+#    return "Status Check"
+
 if __name__ == "__main__":
     f = open("xrmbalance.ini", "r")
     config = json.loads(f.read())
     plugins = {}
     for coin in config.keys():
         plugins[coin] = BalancePlugin(coin, config[coin])
-        
+
+
+    app.run(host="0.0.0.0", port=int("5000"), debug=True)        
+"""
     if len(sys.argv) < 3:
         print("Not enough parameters")
         sys.exit(0)
@@ -125,3 +154,4 @@ if __name__ == "__main__":
     '''for k in p.balances:
         if p.balances[k] > 1000000000000:
             print (k, p.balances[k] / 100000000.0)'''
+"""
