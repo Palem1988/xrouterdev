@@ -1,3 +1,4 @@
 flask
 plyvel
 jsonrpcserver
+python-bitcoinlib
