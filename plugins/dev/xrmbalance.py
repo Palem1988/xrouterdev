@@ -106,9 +106,12 @@ def ping():
 
 @methods.add
 def getbalance(*args, **kwargs):
-    print (args)
-    print (kwargs)
-    return "getbalance", args, kwargs
+    #TODO validation
+    rpcchain = kwargs['chain']
+    rpcaddr = kwargs['address']
+    p = plugins[rpcchain]
+    rpcbalance = p.get_balance(rpcaddr) 
+    return "getbalance", rpcbalance
 
 @app.route('/', methods=['POST'])
 def index():
@@ -128,12 +131,13 @@ if __name__ == "__main__":
     for coin in config.keys():
         plugins[coin] = BalancePlugin(coin, config[coin])
 
-
+    print (config.keys())
     app.run(host="0.0.0.0", port=int("5000"), debug=True)        
 """
     if len(sys.argv) < 3:
         print("Not enough parameters")
         sys.exit(0)
+    #print (args)
     chain = sys.argv[1]
     if not chain in plugins:
         print("This chain is not available yet")
