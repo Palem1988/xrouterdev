@@ -6,6 +6,8 @@ import collections
 import json
 import pickle
 import json
+from flask import Flask, request, Response
+from jsonrpcserver import methods
 from blockchain_parser.blockchain import Blockchain
 from blockchain_parser.script import *
 
@@ -139,34 +141,58 @@ class BalancePlugin:
             return self.balances[address] / 100000000.0
         else:
             return "Unknown address"
-            
+
+app = Flask(__name__)
+
+@methods.add
+def ping():
+    return 'pong'
+
+@methods.add
+def getbalance(*args, **kwargs):
+    #TODO validation
+    print ("args", kwargs)
+    print ("args2", args)
+    #rpcchain = kwargs['chain']
+    #rpcaddr = kwargs['address']
+    rpcchain = args[0]
+    rpcaddr = args[1]
+    p = plugins[rpcchain]
+    rpcbalance = p.get_balance(rpcaddr) 
+    return "getbalance", rpcbalance
+
+@app.route('/', methods=['POST'])
+def index():
+    req = request.get_data().decode()
+    req = json.loads(req)
+    req["jsonrpc"] = "2.0"
+    req = json.dumps(req)
+    print (req)
+    response = methods.dispatch(req)
+    return Response(str(response), response.http_status,
+                    mimetype='application/json')
+
+#@app.route("/api/v1/status")
+#def v1status():
+#    return "Status Check"
+
 if __name__ == "__main__":
     f = open("xrmbalance.ini", "r")
     config = json.loads(f.read())
     plugins = {}
     for coin in config.keys():
         plugins[coin] = BalancePlugin(coin, config[coin])
-        
-    if len(sys.argv) < 3:
-        print("Not enough parameters")
-        sys.exit(0)
-    chain = sys.argv[1]
-    if not chain in plugins:
-        print("This chain is not available yet")
-        sys.exit(0)
-    command = sys.argv[2]
-    p = plugins[chain]
-    if command == "scan":
-        p.scan_all()
-    elif command == "getbalance":
-        if len(sys.argv) < 4:
-            print("Address not specified")
-            sys.exit(0)
-        else:
-            addr = sys.argv[3]
-            print(p.get_balance(addr))
-    #print(len(list(p.balances.keys())))
-    #print(p.balances['xyLmRZxgDhnHq9xbCtV6HQQLNCDMxzJKbz'] / 100000000.0)
-    '''for k in p.balances:
-        if p.balances[k] > 1000000000000:
-            print (k, p.balances[k] / 100000000.0)'''
+
+    print (config.keys())
+    print ( len(sys.argv) )
+    if len(sys.argv) < 2:
+        app.run(host="0.0.0.0", port=int("5000"), debug=True)
+    elif len(sys.argv) < 4:
+        command = sys.argv[1]
+        chain = sys.argv[2]
+        #TODO if adding more commands refactor
+        if command == "scan":
+            print ('Scanning Blockchain: %s' % chain)
+            p = plugins[chain]
+            p.scan_all()
+
