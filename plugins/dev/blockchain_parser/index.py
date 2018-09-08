@@ -47,15 +47,19 @@ class DBBlockIndex(object):
             pos += i
         else:
             self.data_pos = -1
+            
         if self.status & BLOCK_HAVE_UNDO:
             self.undo_pos, i = _read_varint(raw_hex[pos:])
             pos += i
+        else:
+            self.undo_pos = -1
 
-        assert(pos + 80 == len(raw_hex))
+        #assert(pos + 80 == len(raw_hex))
         self.version, p, m, time, bits, self.nonce = unpack(
             "<I32s32sIII",
             raw_hex[-80:]
         )
+        
         self.prev_hash = format_hash(p)
         self.merkle_root = format_hash(m)
 

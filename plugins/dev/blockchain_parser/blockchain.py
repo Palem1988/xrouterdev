@@ -134,17 +134,17 @@ class Blockchain(object):
                 first_block = block
 
             chains.append([block.hash])
-
+            if len(chains) > 100:
+                return False
             for chain in chains:
                 # if this block can be appended to an existing block in one
                 # of the chains, do it
                 if chain[-1] == block.header.previous_block_hash:
                     chain.append(block.hash)
-
                 # if we've found a chain length == num_dependencies (usually 6)
                 # we are ready to make a decesion on whether or not the block
                 # belongs to a fork or the main chain
-                if len(chain) == num_confirmations:
+                if len(chain) >= num_confirmations:
                     if first_block.hash in chain:
                         return True
                     else:
@@ -201,7 +201,6 @@ class Blockchain(object):
                         orphans.append(blockIndexes[i].hash)
 
             last_height = blockIdx.height
-
         # filter out the orphan blocks, so we are left only with block indexes
         # that have been confirmed
         # (or are new enough that they haven't yet been confirmed)
