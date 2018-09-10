@@ -31,17 +31,19 @@ class BalancePlugin:
     def __init__(self, chain, chainpath):
         self.chain = chain
         self.chainpath = chainpath
+        if not os.path.isdir("txdata"):
+            os.mkdir("txdata") 
         try:
-            f = open(self.chain + "-balances.pickle", "rb")
+            f = open("txdata/" + self.chain + "-balances.pickle", "rb")
             self.balances = pickle.load(f)
         except:
             self.balances = {}
         self.blockchain = Blockchain(os.path.expanduser(self.chainpath), chain_const[self.chain]["pch"])
             
     def dump(self):
-        f = open(self.chain + "-txindex.pickle", "wb")
+        f = open("txdata/" + self.chain + "-txindex.pickle", "wb")
         pickle.dump(self.txindex, f)
-        f = open(self.chain + "-balances.pickle", "wb")
+        f = open("txdata/" + self.chain + "-balances.pickle", "wb")
         pickle.dump(self.balances, f)
         
     def dump_txindex(self):
@@ -49,14 +51,14 @@ class BalancePlugin:
         for p in prefixes:
             p_keys = [txid for txid in self.txindex.keys() if txid.startswith(p)]
             try:
-                f = open(self.chain + "-" + p + "-txindex.pickle", "rb")
+                f = open("txdata/" + self.chain + "-" + p + "-txindex.pickle", "rb")
                 txindex_p = pickle.load(f)
                 f.close()
             except:
                 txindex_p = {}
             for k in p_keys:
                 txindex_p[k] = self.txindex[k]
-            f = open(self.chain + "-" + p + "-txindex.pickle", "wb")
+            f = open("txdata/" + self.chain + "-" + p + "-txindex.pickle", "wb")
             pickle.dump(txindex_p, f)
             f.close()
         
@@ -68,7 +70,7 @@ class BalancePlugin:
             self.balances = {}
         else:
             try:
-                f = open(self.chain + "-txindex.pickle", "rb")
+                f = open("txdata/" + self.chain + "-txindex.pickle", "rb")
                 self.txindex = pickle.load(f)
             except:
                 self.txindex = {}
@@ -116,7 +118,7 @@ class BalancePlugin:
         prefixes = gen_prefix(PREFIX_SIZE)
         for p in prefixes:
             p_unresolved = [txd for txd in unresolved if txd[0].startswith(p)]
-            f = open(self.chain + "-" + p + "-txindex.pickle", "rb")
+            f = open("txdata/" + self.chain + "-" + p + "-txindex.pickle", "rb")
             self.txindex = pickle.load(f)
             f.close()
             for txd in p_unresolved:
