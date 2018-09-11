@@ -41,8 +41,6 @@ class BalancePlugin:
         self.blockchain = Blockchain(os.path.expanduser(self.chainpath), chain_const[self.chain]["pch"])
             
     def dump(self):
-        f = open("txdata/" + self.chain + "-txindex.pickle", "wb")
-        pickle.dump(self.txindex, f)
         f = open("txdata/" + self.chain + "-balances.pickle", "wb")
         pickle.dump(self.balances, f)
         
@@ -74,7 +72,7 @@ class BalancePlugin:
                 self.txindex = pickle.load(f)
             except:
                 self.txindex = {}
-            block_generator = self.blockchain.get_ordered_blocks(os.path.expanduser(self.chainpath + "/index"), start=start, end=end)
+            block_generator = self.blockchain.get_ordered_blocks(os.path.expanduser(self.chainpath + "/index"), start=start, end=end, cache="txdata/" + self.chain + "-index-cache.txt")
         unresolved = []
         txcount = 0
         for block in block_generator:
@@ -160,7 +158,7 @@ if __name__ == "__main__":
     command = sys.argv[2]
     p = plugins[chain]
     if command == "scan":
-        p.scan_all()
+        p.scan_all(0, 600000)
     elif command == "getbalance":
         if len(sys.argv) < 4:
             print("Address not specified")
