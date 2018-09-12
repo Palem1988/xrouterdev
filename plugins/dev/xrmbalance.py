@@ -19,22 +19,24 @@ def ping():
 
 @methods.add
 def getbalance(*args, **kwargs):
-    #TODO validation
-    #rpcchain = kwargs['chain']
-    #rpcaddr = kwargs['address']
+    if len(args) < 2:
+        return "getbalance", "Not enough parameters"
     rpcchain = args[0]
     rpcaddr = args[1]
+    if not rpcchain in plugins:
+        return "getbalance", "Unknown chain: " + rpcchain
     p = plugins[rpcchain]
     rpcbalance = p.get_balance(rpcaddr) 
     return "getbalance", rpcbalance
     
 @methods.add
 def getutxos(*args, **kwargs):
-    #TODO validation
-    #rpcchain = kwargs['chain']
-    #rpcaddr = kwargs['address']
+    if len(args) < 2:
+        return "getutxos", "Not enough parameters"
     rpcchain = args[0]
     rpcaddr = args[1]
+    if not rpcchain in plugins:
+        return "getutxos", "Unknown chain: " + rpcchain
     p = plugins[rpcchain]
     rpcutxos = p.get_utxos(rpcaddr) 
     return "getutxos", rpcutxos
