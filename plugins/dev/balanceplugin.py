@@ -155,10 +155,10 @@ class BalancePlugin:
                 for vout in txindex[txhash].keys():
                     tx = txindex[txhash][vout]
                     if address in tx[1]:
-                        #if tx[2] == "u":
-                        result.append([txhash, vout, tx[2], tx[3]])
+                        if tx[2] == "u":
+                            result.append([txhash, vout, tx[0], tx[2], tx[3]])
         print (len(result))
-        return result  
+        return sorted(result, key=lambda x:x[3]) 
             
 if __name__ == "__main__":
     f = open("xrmbalance.ini", "r")
@@ -191,7 +191,11 @@ if __name__ == "__main__":
             sys.exit(0)
         else:
             addr = sys.argv[3]
-            print(p.get_utxos(addr))
+            res = p.get_utxos(addr)
+            for v in res:
+                print(v)
+            bal = sum(x[2] for x in res) / 100000000.0
+            print (bal)
     #print(len(list(p.balances.keys())))
     #print(p.balances['xyLmRZxgDhnHq9xbCtV6HQQLNCDMxzJKbz'] / 100000000.0)
     '''for k in p.balances:

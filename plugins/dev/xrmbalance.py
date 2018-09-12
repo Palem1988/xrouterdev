@@ -20,8 +20,6 @@ def ping():
 @methods.add
 def getbalance(*args, **kwargs):
     #TODO validation
-    print ("args", kwargs)
-    print ("args2", args)
     #rpcchain = kwargs['chain']
     #rpcaddr = kwargs['address']
     rpcchain = args[0]
@@ -29,6 +27,17 @@ def getbalance(*args, **kwargs):
     p = plugins[rpcchain]
     rpcbalance = p.get_balance(rpcaddr) 
     return "getbalance", rpcbalance
+    
+@methods.add
+def getutxos(*args, **kwargs):
+    #TODO validation
+    #rpcchain = kwargs['chain']
+    #rpcaddr = kwargs['address']
+    rpcchain = args[0]
+    rpcaddr = args[1]
+    p = plugins[rpcchain]
+    rpcutxos = p.get_utxos(rpcaddr) 
+    return "getutxos", rpcutxos
 
 @app.route('/', methods=['POST'])
 def index():
