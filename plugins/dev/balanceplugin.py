@@ -31,6 +31,7 @@ class BalancePlugin:
     def __init__(self, chain, chainpath):
         self.chain = chain
         self.chainpath = chainpath
+        self.last_block = 0
         if not os.path.isdir("txdata"):
             os.mkdir("txdata") 
         try:
@@ -39,6 +40,33 @@ class BalancePlugin:
         except:
             self.balances = {}
         self.blockchain = Blockchain(os.path.expanduser(self.chainpath), chain_const[self.chain]["pch"])
+       
+    def load_settings(self):
+        try:
+            f = open("settings.json", "r")
+        except:
+            self.last_block = 0
+        settings = json.loads(f.read())
+        if "last_block" in settings:
+            if self.chain in settings["last_block"]:
+                self.last_block = settings["last_block"][self.chain]
+                return
+        self.last_block = 0
+        
+    def dump_settings(self):
+        try:
+            f = open("settings.json", "r")
+            settings = json.loads(f.read())
+            if not "last_block" in settings:
+                settings["last_block"] = {self.chain:self.last_block}
+            else:
+                settings["last_block"][self.chain] = self.last_block
+            f.close()
+        except:
+            settings = {"last_block":{self.chain:self.last_block}}
+        f = open("settings.json", "w")
+        f.write(json.dumps(settings, indent=4)
+        f.close()
             
     def dump(self):
         f = open("txdata/" + self.chain + "-balances.pickle", "wb")
@@ -61,21 +89,17 @@ class BalancePlugin:
             f.close()
         
     def scan_all(self, start=0, end=None):
-        stop = 0
+        self.load_settings()
         self.txindex = {}
+        block_generator = self.blockchain.get_ordered_blocks(os.path.expanduser(self.chainpath + "/index"), start=start, end=end, cache="txdata/" + self.chain + "-index-cache.txt")
         if (start == 0) and (end is None):
-            block_generator = self.blockchain.get_unordered_blocks()
-            self.balances = {}
-        else:
-            try:
-                f = open("txdata/" + self.chain + "-txindex.pickle", "rb")
-                self.txindex = pickle.load(f)
-            except:
-                self.txindex = {}
-            block_generator = self.blockchain.get_ordered_blocks(os.path.expanduser(self.chainpath + "/index"), start=start, end=end, cache="txdata/" + self.chain + "-index-cache.txt")
+            start = self.last_block + 1
+            
+        stop = start
         unresolved = []
         txcount = 0
         for block in block_generator:
+            self.last_block
             stop = stop + 1
             if not (end is None) and (stop > end):
                 break
@@ -157,7 +181,6 @@ class BalancePlugin:
                     if address in tx[1]:
                         if tx[2] == "u":
                             result.append([txhash, vout, tx[0], tx[2], tx[3]])
-        print (len(result))
         return sorted(result, key=lambda x:x[3]) 
             
 if __name__ == "__main__":
