@@ -46,6 +46,7 @@ class BalancePlugin:
             f = open("settings.json", "r")
         except:
             self.last_block = 0
+            return
         settings = json.loads(f.read())
         if "last_block" in settings:
             if self.chain in settings["last_block"]:
@@ -65,7 +66,7 @@ class BalancePlugin:
         except:
             settings = {"last_block":{self.chain:self.last_block}}
         f = open("settings.json", "w")
-        f.write(json.dumps(settings, indent=4)
+        f.write(json.dumps(settings, indent=4))
         f.close()
             
     def dump(self):
@@ -91,13 +92,16 @@ class BalancePlugin:
     def scan_all(self, start=0, end=None):
         self.load_settings()
         self.txindex = {}
-        block_generator = self.blockchain.get_ordered_blocks(os.path.expanduser(self.chainpath + "/index"), start=start, end=end, cache="txdata/" + self.chain + "-index-cache.txt")
+        block_generator = self.blockchain.get_ordered_blocks(os.path.expanduser(self.chainpath + "/index"), start=start, end=end)
         if (start == 0) and (end is None):
             start = self.last_block + 1
             
         stop = start
+        print (stop)
         unresolved = []
         txcount = 0
+        print (start, stop, end)
+        return
         for block in block_generator:
             self.last_block
             stop = stop + 1
@@ -181,6 +185,7 @@ class BalancePlugin:
                     if address in tx[1]:
                         if tx[2] == "u":
                             result.append([txhash, vout, tx[0], tx[2], tx[3]])
+                            #block_generator = self.blockchain.get_ordered_blocks(os.path.expanduser(self.chainpath + "/index"), start=start, end=end, cache="txdata/" + self.chain + "-index-cache.txt")
         return sorted(result, key=lambda x:x[3]) 
             
 if __name__ == "__main__":
@@ -200,7 +205,7 @@ if __name__ == "__main__":
     command = sys.argv[2]
     p = plugins[chain]
     if command == "scan":
-        p.scan_all(0, 600000)
+        p.scan_all()
     elif command == "getbalance":
         if len(sys.argv) < 4:
             print("Address not specified")

@@ -149,13 +149,8 @@ class Blockchain(object):
                         return True
                     else:
                         return False
-
-    def get_ordered_blocks(self, index, start=0, end=None, cache=None):
-        """Yields the blocks contained in the .blk files as per
-        the heigt extract from the leveldb index present at path
-        index maintained by bitcoind.
-        """
-
+                        
+    def load_indexes(self, index, cache=None):
         blockIndexes = None
 
         if cache and os.path.exists(cache):
@@ -205,7 +200,15 @@ class Blockchain(object):
         # that have been confirmed
         # (or are new enough that they haven't yet been confirmed)
         blockIndexes = list(filter(lambda block: block.hash not in orphans, blockIndexes))
+                  
 
+    def get_ordered_blocks(self, index, start=0, end=None, cache=None):
+        """Yields the blocks contained in the .blk files as per
+        the heigt extract from the leveldb index present at path
+        index maintained by bitcoind.
+        """
+        blockIndexes = self.load_indexes(index, cache=cache)
+        
         if end is None:
             end = len(blockIndexes)
 
