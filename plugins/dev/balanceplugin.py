@@ -86,7 +86,7 @@ class BalancePlugin:
                 self.txindex[transaction.hash] = {}
                 output_i = 0
                 for output in transaction.outputs:
-                    self.txindex[transaction.hash][output_i] = [output.value, []]
+                    self.txindex[transaction.hash][output_i] = [output.value, [], "u", block.height]
                     txcount += 1
                     for address in output.addresses:
                         addr = address.get_address(version_bytes=chain_const[self.chain]["vb"])
@@ -106,6 +106,7 @@ class BalancePlugin:
                                 self.balances[address] = -tx[0]
                             else:
                                 self.balances[address] -= tx[0]
+                        self.txindex[inp.transaction_hash][inp.transaction_index][2] = "s"
                     except:
                         unresolved.append([inp.transaction_hash, inp.transaction_index])
             if txcount > 100000:
@@ -127,8 +128,12 @@ class BalancePlugin:
                             self.balances[address] = -tx[0]
                         else:
                             self.balances[address] -= tx[0]
+                    self.txindex[txd[0]][txd[1]][2] = "s"
                 except:
                     pass
+            f = open("txdata/" + self.chain + "-" + p + "-txindex.pickle", "wb")
+            pickle.dump(self.txindex, f)
+            f.close()
         self.dump()
         del self.txindex
         self.txindex = {}
@@ -139,7 +144,21 @@ class BalancePlugin:
         else:
             return "Unknown address"
             
-            
+    def get_utxos(self, address):
+        prefixes = gen_prefix(PREFIX_SIZE)
+        result = []
+        for p in prefixes:
+            f = open("txdata/" + self.chain + "-" + p + "-txindex.pickle", "rb")
+            txindex = pickle.load(f)
+            f.close()
+            for txhash in txindex.keys():
+                for vout in txindex[txhash].keys():
+                    tx = txindex[txhash][vout]
+                    if address in tx[1]:
+                        #if tx[2] == "u":
+                        result.append([txhash, vout, tx[2], tx[3]])
+        print (len(result))
+        return result  
             
 if __name__ == "__main__":
     f = open("xrmbalance.ini", "r")
@@ -166,6 +185,13 @@ if __name__ == "__main__":
         else:
             addr = sys.argv[3]
             print(p.get_balance(addr))
+    elif command == "getutxos":
+        if len(sys.argv) < 4:
+            print("Address not specified")
+            sys.exit(0)
+        else:
+            addr = sys.argv[3]
+            print(p.get_utxos(addr))
     #print(len(list(p.balances.keys())))
     #print(p.balances['xyLmRZxgDhnHq9xbCtV6HQQLNCDMxzJKbz'] / 100000000.0)
     '''for k in p.balances:
