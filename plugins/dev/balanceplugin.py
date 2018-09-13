@@ -185,7 +185,8 @@ class BalancePlugin:
                     tx = txindex[txhash][vout]
                     if address in tx[1]:
                         if tx[2] == "u":
-                            result.append([txhash, vout, tx[0], tx[2], tx[3]])
+                            block = self.blockchain.load_block(tx[3])
+                            result.append([txhash, vout, tx[0], tx[2], tx[3], block.hash])
                             #block_generator = self.blockchain.get_ordered_blocks(os.path.expanduser(self.chainpath + "/index"), start=start, end=end, cache="txdata/" + self.chain + "-index-cache.txt")
         return sorted(result, key=lambda x:x[3]) 
             
