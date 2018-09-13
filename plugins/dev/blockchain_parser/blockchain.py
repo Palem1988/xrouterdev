@@ -200,7 +200,15 @@ class Blockchain(object):
         # that have been confirmed
         # (or are new enough that they haven't yet been confirmed)
         blockIndexes = list(filter(lambda block: block.hash not in orphans, blockIndexes))
-                  
+        
+    def load_block(self, number):
+        if not self.blockIndexes:
+            raise "You need to load index first"
+        blkIdx = blockIndexes[number]
+        if blkIdx.file == -1 or blkIdx.data_pos == -1:
+            return None
+        blkFile = os.path.join(self.path, "blk%05d.dat" % blkIdx.file)
+        return Block(get_block(blkFile, blkIdx.data_pos), blkIdx.height)          
 
     def get_ordered_blocks(self, index, start=0, end=None, cache=None):
         """Yields the blocks contained in the .blk files as per

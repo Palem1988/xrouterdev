@@ -175,6 +175,7 @@ class BalancePlugin:
     def get_utxos(self, address):
         prefixes = gen_prefix(PREFIX_SIZE)
         result = []
+        self.blockchain.load_indexes(os.path.expanduser(self.chainpath + "/index"), cache="txdata/" + self.chain + "-index-cache.txt")
         for p in prefixes:
             f = open("txdata/" + self.chain + "-" + p + "-txindex.pickle", "rb")
             txindex = pickle.load(f)

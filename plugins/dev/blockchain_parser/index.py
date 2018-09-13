@@ -54,6 +54,8 @@ class DBBlockIndex(object):
         else:
             self.undo_pos = -1
 
+        # Works for BTC and BLOCK
+        # BLOCK has 180 bytes in each entry, but the last 80 are the same as BTC
         #assert(pos + 80 == len(raw_hex))
         self.version, p, m, time, bits, self.nonce = unpack(
             "<I32s32sIII",
