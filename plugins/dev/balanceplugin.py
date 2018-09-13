@@ -89,21 +89,20 @@ class BalancePlugin:
             pickle.dump(txindex_p, f)
             f.close()
         
-    def scan_all(self, start=0, end=None):
+    def scan_all(self, start=None, end=None):
         self.load_settings()
         self.txindex = {}
-        block_generator = self.blockchain.get_ordered_blocks(os.path.expanduser(self.chainpath + "/index"), start=start, end=end)
-        if (start == 0) and (end is None):
+        if start is None:
             start = self.last_block + 1
+        block_generator = self.blockchain.get_ordered_blocks(os.path.expanduser(self.chainpath + "/index"), start=start, end=end)
             
         stop = start
         print (stop)
         unresolved = []
         txcount = 0
         print (start, stop, end)
-        return
         for block in block_generator:
-            self.last_block
+            self.last_block = block.height
             stop = stop + 1
             if not (end is None) and (stop > end):
                 break
@@ -163,6 +162,8 @@ class BalancePlugin:
             pickle.dump(self.txindex, f)
             f.close()
         self.dump()
+        self.dump_settings()
+        self.blockchain.dump_indexes("txdata/" + self.chain + "-index-cache.txt")
         del self.txindex
         self.txindex = {}
         
@@ -186,9 +187,8 @@ class BalancePlugin:
                     if address in tx[1]:
                         if tx[2] == "u":
                             block = self.blockchain.load_block(tx[3])
-                            result.append([txhash, vout, tx[0], tx[2], tx[3], block.hash])
-                            #block_generator = self.blockchain.get_ordered_blocks(os.path.expanduser(self.chainpath + "/index"), start=start, end=end, cache="txdata/" + self.chain + "-index-cache.txt")
-        return sorted(result, key=lambda x:x[3]) 
+                            result.append({"txhash": txhash, "vout": vout, "value": tx[0], "block_number": tx[3], "block_hash": block.hash})
+        return sorted(result, key=lambda x:x["block_number"]) 
             
 if __name__ == "__main__":
     f = open("xrmbalance.ini", "r")
@@ -224,7 +224,7 @@ if __name__ == "__main__":
             res = p.get_utxos(addr)
             for v in res:
                 print(v)
-            bal = sum(x[2] for x in res) / 100000000.0
+            bal = sum(x["value"] for x in res) / 100000000.0
             print (bal)
     #print(len(list(p.balances.keys())))
     #print(p.balances['xyLmRZxgDhnHq9xbCtV6HQQLNCDMxzJKbz'] / 100000000.0)

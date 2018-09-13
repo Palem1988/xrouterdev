@@ -200,6 +200,11 @@ class Blockchain(object):
         # that have been confirmed
         # (or are new enough that they haven't yet been confirmed)
         self.blockIndexes = list(filter(lambda block: block.hash not in orphans, blockIndexes))
+        return self.blockIndexes
+    
+    def dump_indexes(self, filename):
+        with open(filename, 'wb') as f:
+            pickle.dump(self.blockIndexes, f)
         
     def load_block(self, number):
         if not self.blockIndexes:
